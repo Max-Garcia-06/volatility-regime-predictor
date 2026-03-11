@@ -1,0 +1,16 @@
+feature,importance
+vix_percentile,0.18351644
+bb_position,0.08298436
+rsi_14,0.080632195
+spy_return_10d,0.07037891
+price_vs_ma50,0.06457205
+vix_level,0.060136307
+vix_ma_ratio,0.0601117
+realized_vol_20d,0.05892768
+price_vs_ma200,0.058294535
+spy_return_20d,0.05517161
+realized_vol_10d,0.054778267
+spy_return_5d,0.05256738
+volume_ratio,0.043855306
+spy_return_1d,0.03885651
+vix_return_1d,0.035216704
