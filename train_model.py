@@ -12,12 +12,9 @@ import joblib
 import warnings
 warnings.filterwarnings('ignore')
 
-print("=" * 60)
 print("LOGISTIC REGRESSION MODEL TRAINING")
-print("=" * 60)
 
 # Load
-print("\nLoading features.csv...")
 df = pd.read_csv('features.csv', index_col=0, parse_dates=True)
 print(f"Date range: {df.index[0].date()} to {df.index[-1].date()}")
 
@@ -70,7 +67,6 @@ baseline_acc = accuracy_score(y_test, dummy.predict(X_test_scaled))
 print(f"\nTrue Baseline: {baseline_acc:.4f} ({baseline_acc*100:.1f}%)")
 
 # Train
-print("\nTraining Logistic Regression...")
 model = LogisticRegression(
     C=0.1,              
     class_weight='balanced',
@@ -80,7 +76,7 @@ model = LogisticRegression(
 )
 
 model.fit(X_train_scaled, y_train)
-print("Training complete!")
+
 
 # Predictions
 y_train_pred  = model.predict(X_train_scaled)
@@ -100,9 +96,7 @@ train_auc = roc_auc_score(y_train, y_train_proba)
 val_auc   = roc_auc_score(y_val,   y_val_proba)
 test_auc  = roc_auc_score(y_test,  y_test_proba)
 
-print("\n" + "=" * 60)
 print("RESULTS")
-print("=" * 60)
 
 print(f"\nAccuracy:")
 print(f"   Train: {train_acc:.4f} ({train_acc*100:.2f}%)")
@@ -115,7 +109,7 @@ print(f"   Val:   {val_auc:.4f}")
 print(f"   Test:  {test_auc:.4f}")
 
 diff = test_acc - baseline_acc
-flag = "Beats baseline!" if diff > 0 else "Worse than baseline"
+flag = "Beats baseline" if diff > 0 else "Worse than baseline"
 print(f"\nBaseline vs Model:")
 print(f"   Baseline: {baseline_acc:.4f} ({baseline_acc*100:.1f}%)")
 print(f"   Model:    {test_acc:.4f} ({test_acc*100:.1f}%)")
