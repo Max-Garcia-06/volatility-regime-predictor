@@ -12,6 +12,7 @@ feature_cols = [
     'spy_return_1d', 'spy_return_5d', 'spy_return_10d', 'spy_return_20d',
     'rsi_14', 'bb_position', 'price_vs_ma50', 'price_vs_ma200',
     'vix_level', 'vix_return_1d', 'vix_ma_ratio', 'vix_percentile', 'vix_spike',
+    'vix_term_structure', 'vol_risk_premium',
     'realized_vol_10d', 'realized_vol_20d', 'volume_ratio'
 ]
 

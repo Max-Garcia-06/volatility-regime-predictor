@@ -1,0 +1,2 @@
+date,spy_close,vix_level,lr_proba,xgb_proba,ens_proba,regime,signal_strength
+2026-04-13,686.13,19.18,0.3266,0.1628,0.2447,LOW,Strong

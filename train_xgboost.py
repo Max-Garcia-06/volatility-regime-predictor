@@ -1,6 +1,7 @@
 from xgboost import XGBClassifier
 from sklearn.metrics import (accuracy_score, classification_report,
                               confusion_matrix, roc_auc_score, f1_score)
+from sklearn.preprocessing import StandardScaler
 from sklearn.dummy import DummyClassifier
 import pandas as pd
 import numpy as np
@@ -24,9 +25,9 @@ print(f"Date range: {df.index[0].date()} to {df.index[-1].date()}")
 feature_cols = [
     'spy_return_1d', 'spy_return_5d', 'spy_return_10d', 'spy_return_20d',
     'rsi_14', 'bb_position', 'price_vs_ma50', 'price_vs_ma200',
-    'vix_level', 'vix_return_1d', 'vix_ma_ratio', 'vix_percentile',
+    'vix_level', 'vix_return_1d', 'vix_ma_ratio', 'vix_percentile', 'vix_spike',
+    'vix_term_structure', 'vol_risk_premium',
     'realized_vol_10d', 'realized_vol_20d', 'volume_ratio'
-
 ]
 
 missing = [col for col in feature_cols if col not in df.columns]
@@ -58,6 +59,12 @@ print(f"\nData Split:")
 print(f"   Train: {len(X_train)} ({X_train.index[0].date()} to {X_train.index[-1].date()})")
 print(f"   Val:   {len(X_val)} ({X_val.index[0].date()} to {X_val.index[-1].date()})")
 print(f"   Test:  {len(X_test)} ({X_test.index[0].date()} to {X_test.index[-1].date()})")
+
+# Scale features (fit only on train)
+scaler      = StandardScaler()
+X_train     = scaler.fit_transform(X_train)
+X_val       = scaler.transform(X_val)
+X_test      = scaler.transform(X_test)
 
 # Baseline
 dummy = DummyClassifier(strategy='most_frequent')
@@ -226,5 +233,12 @@ plt.tight_layout()
 plt.savefig('xgb_performance.png', dpi=300, bbox_inches='tight')
 plt.close()
 
+# Calibrate probabilities using validation set (Platt scaling)
+from sklearn.linear_model import LogisticRegression as PlattScaler
+xgb_calibrator = PlattScaler(C=1.0)
+xgb_calibrator.fit(y_val_proba.reshape(-1, 1), y_val)
+print("\nProbability calibration applied (Platt scaling on val set)")
+
 # Save
-joblib.dump(xgb_model, 'xgboost_model.pkl')
+joblib.dump(xgb_model,      'xgboost_model.pkl')
+joblib.dump(xgb_calibrator, 'xgb_calibrator.pkl')

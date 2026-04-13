@@ -23,6 +23,7 @@ feature_cols = [
     'spy_return_1d', 'spy_return_5d', 'spy_return_10d', 'spy_return_20d',
     'rsi_14', 'bb_position', 'price_vs_ma50', 'price_vs_ma200',
     'vix_level', 'vix_return_1d', 'vix_ma_ratio', 'vix_percentile', 'vix_spike',
+    'vix_term_structure', 'vol_risk_premium',
     'realized_vol_10d', 'realized_vol_20d', 'volume_ratio'
 ]
 
@@ -76,7 +77,6 @@ model = LogisticRegression(
 )
 
 model.fit(X_train_scaled, y_train)
-
 
 # Predictions
 y_train_pred  = model.predict(X_train_scaled)
@@ -206,6 +206,13 @@ plt.tight_layout()
 plt.savefig('lr_performance.png', dpi=300, bbox_inches='tight')
 plt.close()
 
+# Calibrate probabilities using validation set (Platt scaling)
+from sklearn.linear_model import LogisticRegression as PlattScaler
+lr_calibrator = PlattScaler(C=1.0)
+lr_calibrator.fit(y_val_proba.reshape(-1, 1), y_val)
+print("\nProbability calibration applied (Platt scaling on val set)")
+
 # Save
-joblib.dump(model,  'logistic_regression_model.pkl')
-joblib.dump(scaler, 'scaler.pkl')
+joblib.dump(model,         'logistic_regression_model.pkl')
+joblib.dump(lr_calibrator, 'lr_calibrator.pkl')
+joblib.dump(scaler,        'scaler.pkl')
