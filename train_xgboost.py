@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from xgboost import XGBClassifier
 from sklearn.metrics import (accuracy_score, classification_report,
                               confusion_matrix, roc_auc_score, f1_score)
@@ -9,6 +11,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 import warnings
+
+from features import FEATURE_COLS, RANDOM_STATE, chronological_split
+
 warnings.filterwarnings('ignore')
 
 print("=" * 60)
@@ -21,50 +26,41 @@ df = pd.read_csv('features.csv', index_col=0, parse_dates=True)
 print(f"Loaded {len(df)} samples")
 print(f"Date range: {df.index[0].date()} to {df.index[-1].date()}")
 
-# Features
-feature_cols = [
-    'spy_return_1d', 'spy_return_5d', 'spy_return_10d', 'spy_return_20d',
-    'rsi_14', 'bb_position', 'price_vs_ma50', 'price_vs_ma200',
-    'vix_level', 'vix_return_1d', 'vix_ma_ratio', 'vix_percentile', 'vix_spike',
-    'vix_term_structure', 'vol_risk_premium',
-    'realized_vol_10d', 'realized_vol_20d', 'volume_ratio'
-]
-
-missing = [col for col in feature_cols if col not in df.columns]
+missing = [col for col in FEATURE_COLS if col not in df.columns]
 if missing:
     print(f"\nERROR: Missing columns: {missing}")
     print(f"   Available: {df.columns.tolist()}")
-    exit()
+    raise SystemExit(1)
 
-X = df[feature_cols]
+X = df[FEATURE_COLS]
 y = df['target']
 
-print(f"\nFeatures: {len(feature_cols)}")
+print(f"\nFeatures: {len(FEATURE_COLS)}")
 print(f"Target Distribution:")
 print(f"   High Vol (1): {y.sum()} ({y.mean()*100:.1f}%)")
 print(f"   Low  Vol (0): {(1-y).sum()} ({(1-y.mean())*100:.1f}%)")
 
-# Split
-train_size = int(0.7 * len(X))
-val_size   = int(0.15 * len(X))
-
-X_train = X.iloc[:train_size]
-y_train = y.iloc[:train_size]
-X_val   = X.iloc[train_size:train_size + val_size]
-y_val   = y.iloc[train_size:train_size + val_size]
-X_test  = X.iloc[train_size + val_size:]
-y_test  = y.iloc[train_size + val_size:]
+X_train, y_train, X_val, y_val, X_test, y_test = chronological_split(X, y)
 
 print(f"\nData Split:")
 print(f"   Train: {len(X_train)} ({X_train.index[0].date()} to {X_train.index[-1].date()})")
 print(f"   Val:   {len(X_val)} ({X_val.index[0].date()} to {X_val.index[-1].date()})")
 print(f"   Test:  {len(X_test)} ({X_test.index[0].date()} to {X_test.index[-1].date()})")
 
-# Scale features (fit only on train)
-scaler      = StandardScaler()
-X_train     = scaler.fit_transform(X_train)
-X_val       = scaler.transform(X_val)
-X_test      = scaler.transform(X_test)
+# Use the same scaler as logistic regression (saved by train_model.py)
+scaler_path = Path("scaler.pkl")
+if scaler_path.exists():
+    scaler = joblib.load(scaler_path)
+    print("\nLoaded scaler.pkl from train_model.py")
+else:
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    joblib.dump(scaler, scaler_path)
+    print("\nFitted new scaler.pkl (run train_model.py first in normal workflow)")
+
+X_train = scaler.transform(X_train)
+X_val   = scaler.transform(X_val)
+X_test  = scaler.transform(X_test)
 
 # Baseline
 dummy = DummyClassifier(strategy='most_frequent')
@@ -89,7 +85,7 @@ xgb_model = XGBClassifier(
     gamma=0.1,              # ← Reduce overfitting
     scale_pos_weight=scale, # ← Handle class imbalance
     eval_metric='logloss',
-    random_state=42
+    random_state=RANDOM_STATE
 )
 
 xgb_model.fit(
@@ -175,7 +171,7 @@ print(f"\nBest Threshold: {best_threshold:.2f}  (F1 = {best_f1:.4f})")
 
 # Feature importance
 importance_df = pd.DataFrame({
-    'feature':    feature_cols,
+    'feature':    FEATURE_COLS,
     'importance': xgb_model.feature_importances_
 }).sort_values('importance', ascending=False)
 

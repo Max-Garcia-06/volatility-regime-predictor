@@ -7,6 +7,15 @@ from sklearn.dummy import DummyClassifier
 from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
 import warnings
+
+from features import (
+    FEATURE_COLS,
+    RANDOM_STATE,
+    WALK_FORWARD_STEP,
+    WALK_FORWARD_TEST,
+    WALK_FORWARD_TRAIN,
+)
+
 warnings.filterwarnings('ignore')
 
 print("=" * 60)
@@ -15,21 +24,13 @@ print("=" * 60)
 
 df = pd.read_csv('features.csv', index_col=0, parse_dates=True)
 
-feature_cols = [
-    'spy_return_1d', 'spy_return_5d', 'spy_return_10d', 'spy_return_20d',
-    'rsi_14', 'bb_position', 'price_vs_ma50', 'price_vs_ma200',
-    'vix_level', 'vix_return_1d', 'vix_ma_ratio', 'vix_percentile', 'vix_spike',
-    'vix_term_structure', 'vol_risk_premium',
-    'realized_vol_10d', 'realized_vol_20d', 'volume_ratio'
-]
-
-X     = df[feature_cols].values
+X     = df[FEATURE_COLS].values
 y     = df['target'].values
 dates = df.index
 
-TRAIN_WINDOW = 400
-TEST_WINDOW  = 60
-STEP         = 60
+TRAIN_WINDOW = WALK_FORWARD_TRAIN
+TEST_WINDOW  = WALK_FORWARD_TEST
+STEP         = WALK_FORWARD_STEP
 
 results = []
 fold    = 1
@@ -56,7 +57,7 @@ while start + TRAIN_WINDOW + TEST_WINDOW <= len(X):
 
     # Logistic regression
     lr = LogisticRegression(C=0.1, class_weight='balanced',
-                             max_iter=1000, random_state=42)
+                             max_iter=1000, random_state=RANDOM_STATE)
     lr.fit(X_train_s, y_train)
     lr_proba = lr.predict_proba(X_test_s)[:, 1]
     lr_pred  = lr.predict(X_test_s)
@@ -80,7 +81,7 @@ while start + TRAIN_WINDOW + TEST_WINDOW <= len(X):
         reg_lambda=1.5,
         scale_pos_weight=scale,
         eval_metric='logloss',
-        random_state=42
+        random_state=RANDOM_STATE
     )
     xgb.fit(X_train_s, y_train)
     xgb_proba = xgb.predict_proba(X_test_s)[:, 1]

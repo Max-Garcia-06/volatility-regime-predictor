@@ -114,19 +114,32 @@ position sizing.
 
 ```
 volatility-regime-predictor/
+├── features.py              # Shared feature engineering + constants
+├── dashboard.py             # Streamlit analytics dashboard
 ├── predict_today.py         # Live daily prediction with options signal
-├── create_features.py       # Feature engineering + volatility target (18 features)
+├── create_features.py       # Downloads data and writes features.csv
 ├── train_model.py           # Logistic Regression + Platt calibration
 ├── train_xgboost.py         # XGBoost + Platt calibration
 ├── walk_forward.py          # Walk-forward validation (10 folds)
 ├── ensemble.py              # Ensemble evaluation
 ├── collect_data.py          # Downloads SPY options chain data
-├── diagnostic.py            # Threshold analysis on saved model
+├── diagnostic.py            # Threshold analysis on saved LR model
 ├── requirements.txt
 └── README.md
 ```
 
 ---
+
+## Dashboard
+
+Interactive analytics UI with live signals, walk-forward charts, and prediction history:
+
+```bash
+pip install -r requirements.txt
+streamlit run dashboard.py
+```
+
+Opens at `http://localhost:8501`. Use **Refresh live prediction** in the sidebar to pull fresh market data.
 
 ## Setup
 
